@@ -7,9 +7,9 @@ The server is made for my own use to provide the output of the Leap Motion devic
 
 The server is based on the Leap Motion Python [sample application](https://developer.leapmotion.com/documentation/guide/Sample_Python_Tutorial#running-the-sample) and requires the following files from the Leap SDK to be available from the working directory:
 
- - Leap.py
- - Leap.dll
- - LeapPython.pyd
+ - `Leap.py`
+ - `Leap.dll`
+ - `LeapPython.pyd`
 
 In addition to the Leap SDK you will need the following:
 
