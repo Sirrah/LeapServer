@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 import Leap, sys
 import json, zmq
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
@@ -36,7 +37,7 @@ class SampleListener(Leap.Listener):
     ctx = zmq.Context()
     #self.zmqSocket = ctx.socket(zmq.PUSH)
     self.zmqSocket = ctx.socket(zmq.PUB)
-    self.zmqSocket.bind('tcp://127.0.0.1:3333')
+    self.zmqSocket.bind('tcp://127.0.0.1:5557')
 
     print "Initialized"
 
