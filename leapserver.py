@@ -15,15 +15,22 @@ class SampleListener(Leap.Listener):
   def state_string(self, state):
     if state == Leap.Gesture.STATE_START:
       return "STATE_START"
-
     if state == Leap.Gesture.STATE_UPDATE:
       return "STATE_UPDATE"
-
     if state == Leap.Gesture.STATE_STOP:
       return "STATE_STOP"
-
     if state == Leap.Gesture.STATE_INVALID:
       return "STATE_INVALID"
+
+  def type_string(self, gesture_type):
+    if gesture_type == Leap.Gesture.TYPE_CIRCLE:
+      return "TYPE_CIRCLE"
+    if gesture_type == Leap.Gesture.TYPE_KEY_TAP:
+      return "TYPE_KEY_TAP"
+    if gesture_type == Leap.Gesture.TYPE_SCREEN_TAP:
+      return "TYPE_SCREEN_TAP"
+    if gesture_type == Leap.Gesture.TYPE_SWIPE:
+      return "TYPE_SWIPE"
 
   def on_init(self, controller):
     ctx = zmq.Context()
@@ -52,8 +59,8 @@ class SampleListener(Leap.Listener):
     #print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
     #  frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
 
-    data = {'frame' : {'id':frame.id, 'timestamp':frame.timestamp} }
-    self.send(json.dumps(data))
+    data = {'id':frame.id, 'timestamp':frame.timestamp, 'gestures':[]}
+
     
     if not frame.hands.empty:
       # Get the first hand
@@ -67,26 +74,27 @@ class SampleListener(Leap.Listener):
         for finger in fingers:
             avg_pos += finger.tip_position
         avg_pos /= len(fingers)
-        msg = {'frame' : {'fingers' : len(fingers), 'avg_pos' : [avg_pos.x, avg_pos.y, avg_pos.z]}}
-        self.send(json.dumps(msg))
+        #msg = {'frame' : {'fingers' : len(fingers), 'avg_pos' : [avg_pos.x, avg_pos.y, avg_pos.z]}}
+        #self.send(json.dumps(msg))
         #print msg
         
         # Get the hand's sphere radius and palm position
-        print "Hand sphere radius: %f mm, palm position: %s" % (
-              hand.sphere_radius, hand.palm_position)
+        #print "Hand sphere radius: %f mm, palm position: %s" % (
+        #      hand.sphere_radius, hand.palm_position)
 
         # Get the hand's normal vector and direction
         normal = hand.palm_normal
         direction = hand.direction
 
         # Calculate the hand's pitch, roll, and yaw angles
-        print "Hand pitch: %f degrees, roll: %f degrees, yaw: %f degrees" % (
-          direction.pitch * Leap.RAD_TO_DEG,
-          normal.roll * Leap.RAD_TO_DEG,
-          direction.yaw * Leap.RAD_TO_DEG)
+        #print "Hand pitch: %f degrees, roll: %f degrees, yaw: %f degrees" % (
+        #  direction.pitch * Leap.RAD_TO_DEG,
+        #  normal.roll * Leap.RAD_TO_DEG,
+        #  direction.yaw * Leap.RAD_TO_DEG)
 
         # Gestures
         for gesture in frame.gestures():
+          gesture_data = {'id':gesture.id, 'type':self.type_string(gesture.type), 'state':self.state_string(gesture.state)}
           if gesture.type == Leap.Gesture.TYPE_CIRCLE:
             circle = CircleGesture(gesture)
 
@@ -102,27 +110,31 @@ class SampleListener(Leap.Listener):
               previous_update = CircleGesture(controller.frame(1).gesture(circle.id))
               swept_angle =  (circle.progress - previous_update.progress) * 2 * Leap.PI
 
-            print "Circle id: %d, %s, progress: %f, radius: %f, angle: %f degrees, %s" % (
-              gesture.id, self.state_string(gesture.state),
-              circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
+            gesture_data['radius'] = circle.radius
+            #print "Circle id: %d, %s, progress: %f, radius: %f, angle: %f degrees, %s" % (
+            #  gesture.id, self.state_string(gesture.state),
+            #  circle.progress, circle.radius, swept_angle * Leap.RAD_TO_DEG, clockwiseness)
 
           if gesture.type == Leap.Gesture.TYPE_SWIPE:
             swipe = SwipeGesture(gesture)
-            print "Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f" % (
-              gesture.id, self.state_string(gesture.state),
-              swipe.position, swipe.direction, swipe.speed)
+            #print "Swipe id: %d, state: %s, position: %s, direction: %s, speed: %f" % (
+            #  gesture.id, self.state_string(gesture.state),
+            #  swipe.position, swipe.direction, swipe.speed)
 
           if gesture.type == Leap.Gesture.TYPE_KEY_TAP:
             keytap = KeyTapGesture(gesture)
-            print "Key Tap id: %d, %s, position: %s, direction: %s" % (
-              gesture.id, self.state_string(gesture.state),
-              keytap.position, keytap.direction )
+            #print "Key Tap id: %d, %s, position: %s, direction: %s" % (
+            #  gesture.id, self.state_string(gesture.state),
+            #  keytap.position, keytap.direction )
 
           if gesture.type == Leap.Gesture.TYPE_SCREEN_TAP:
             screentap = ScreenTapGesture(gesture)
-            print "Screen Tap id: %d, %s, position: %s, direction: %s" % (
-              gesture.id, self.state_string(gesture.state),
-              screentap.position, screentap.direction )
+            #print "Screen Tap id: %d, %s, position: %s, direction: %s" % (
+            #  gesture.id, self.state_string(gesture.state),
+            #  screentap.position, screentap.direction )
+          data['gestures'].append(gesture_data)
+
+    self.send(json.dumps(data))
 
 def main():
   listener = SampleListener()
