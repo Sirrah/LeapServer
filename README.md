@@ -15,7 +15,7 @@ In addition to the Leap SDK you will need the following:
 
  - [Python 2.7](http://www.python.org/download/releases/2.7) (v2.7 is required for the Leap SDK)
  - [0mq](http://www.zeromq.org)
- - [Python bindings](http://www.zeromq.org/bindings:python) for 0mq
+ - Python [bindings](http://www.zeromq.org/bindings:python) for 0mq
 
 ## Usage
 
