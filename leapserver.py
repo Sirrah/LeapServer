@@ -1,14 +1,16 @@
-import zmq
-import Leap
-import sys
+import Leap, sys
+import json, zmq
+from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 
 class SampleListener(Leap.Listener):
 
   def send(self, msg):
-    self.zmqSocket.send_json({
-      "message" : msg
-    })
-    print msg
+    print "Sending: " + msg
+    #self.zmqSocket.send_json({
+    #  "message" : msg
+    #})
+    self.zmqSocket.send(msg)
+    
 
   def state_string(self, state):
     if state == Leap.Gesture.STATE_START:
@@ -25,7 +27,8 @@ class SampleListener(Leap.Listener):
 
   def on_init(self, controller):
     ctx = zmq.Context()
-    self.zmqSocket = ctx.socket(zmq.PUSH)
+    #self.zmqSocket = ctx.socket(zmq.PUSH)
+    self.zmqSocket = ctx.socket(zmq.PUB)
     self.zmqSocket.bind('tcp://127.0.0.1:3333')
 
     print "Initialized"
@@ -45,13 +48,16 @@ class SampleListener(Leap.Listener):
   def on_frame(self, controller):
     # Get the most recent frame and report some basic information
     frame = controller.frame()
-    print frame
-    print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
-      frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
+    
+    #print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
+    #  frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
 
+    data = {'frame' : {'id':frame.id, 'timestamp':frame.timestamp} }
+    self.send(json.dumps(data))
+    
     if not frame.hands.empty:
       # Get the first hand
-      hand = hands[0]
+      hand = frame.hands[0]
 
       # Check if the hand has any fingers
       fingers = hand.fingers
@@ -61,10 +67,10 @@ class SampleListener(Leap.Listener):
         for finger in fingers:
             avg_pos += finger.tip_position
         avg_pos /= len(fingers)
-        msg = "Hand has %d fingers, average finger tip position: %s" % (
-              len(fingers), avg_pos)
-        self.send(msg)
-
+        msg = {'frame' : {'fingers' : len(fingers), 'avg_pos' : [avg_pos.x, avg_pos.y, avg_pos.z]}}
+        self.send(json.dumps(msg))
+        #print msg
+        
         # Get the hand's sphere radius and palm position
         print "Hand sphere radius: %f mm, palm position: %s" % (
               hand.sphere_radius, hand.palm_position)
@@ -120,8 +126,7 @@ class SampleListener(Leap.Listener):
 
 def main():
   listener = SampleListener()
-  listener
-  controller = Leap.Controller(listener)
+  controller = Leap.Controller()
 
   controller.add_listener(listener)
 
