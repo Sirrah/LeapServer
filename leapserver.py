@@ -5,13 +5,16 @@ from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 
 class SampleListener(Leap.Listener):
 
-  def send(self, msg):
+  def send(self, data):
+    header = 'empty_frame'
+    if len(data['gestures']) > 0:
+      header = 'gestures'
+    elif data['fingers'] > 0:
+      header = 'fingers'
+    data_json = json.dumps(data)
+    msg = header + " " + data_json
     print "Sending: " + msg
-    #self.zmqSocket.send_json({
-    #  "message" : msg
-    #})
     self.zmqSocket.send(msg)
-    
 
   def state_string(self, state):
     if state == Leap.Gesture.STATE_START:
@@ -60,7 +63,7 @@ class SampleListener(Leap.Listener):
     #print "Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
     #  frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures()))
 
-    data = {'id':frame.id, 'timestamp':frame.timestamp, 'gestures':[]}
+    data = {'id':frame.id, 'timestamp':frame.timestamp, 'gestures':[], 'fingers':len(frame.fingers)}
 
     
     if not frame.hands.empty:
@@ -135,7 +138,7 @@ class SampleListener(Leap.Listener):
             #  screentap.position, screentap.direction )
           data['gestures'].append(gesture_data)
 
-    self.send(json.dumps(data))
+    self.send(data)
 
 def main():
   listener = SampleListener()
