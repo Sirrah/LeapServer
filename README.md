@@ -19,7 +19,7 @@ In addition to the Leap SDK you will need the following:
 
 ## Usage
 
-1. Start the Leap software as usual
+1. Start the Leap software as [usual](https://developer.leapmotion.com/documentation/guide/Sample_Python_Tutorial#running-the-sample)
 2. run `leapserver.py`
 3. (optional) run `debugclient.py`
 
